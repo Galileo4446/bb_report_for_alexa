@@ -26,5 +26,8 @@ print(batter)
 pitcher=soup.select('#pitcherL a')
 print(pitcher)
 
-pitcher=soup.select('#pitcherR a')
-print(pitcher)
+# pitcher=soup.select('#pitcherR a')
+# print(pitcher)
+
+
+print('ピッチャーは' + pitcher[0].text + '\nバッターは' + batter[0].text)
