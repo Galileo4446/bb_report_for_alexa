@@ -3,6 +3,10 @@ from bs4 import BeautifulSoup  # BeautifulSoupクラスをインポート
 import time
 
 # print('速報できる試合を調べています。')
+# url = 'https://baseball.yahoo.co.jp/npb/schedule/'
+# response = request.urlopen(url)
+# soup = BeautifulSoup(response, features="html.parser")
+# response.close()
 
 # チーム名入力
 teams={'top': 'バッファローズ', 'bottom': 'ホークス'}
@@ -18,7 +22,7 @@ def main():
     result=''
     runner='ランナーなし'
     while True:
-        url = 'https://baseball.yahoo.co.jp/npb_practice/game/2020061116/score?index=0710200'
+        url = 'https://baseball.yahoo.co.jp/npb_practice/game/2020061116/score?index=0120200'
         response = request.urlopen(url)
         soup = BeautifulSoup(response, features="html.parser")
         response.close()
@@ -79,8 +83,6 @@ def inning_message(inning):
     else:
         return inning
 
-
-# 関数呼び出しはbsoが3まであることを確認してから！様々な処理に使うから大事。
 def bso_converter(bso):
     return {'ball': len(bso[0].text), 'strike': len(bso[1].text), 'out': len(bso[2].text)}
 
@@ -128,11 +130,24 @@ def score_message(score):
 
 def get_pitcher_name(soup):
     if len(soup.select('#pitcherL a')):
-        return 'ピッチャーは' + soup.select('#pitcherL a')[0].text
+        url='https://baseball.yahoo.co.jp' + soup.select('#pitcherL a')[0].get('href')
+        name=soup.select('#pitcherL a')[0].text
     elif len(soup.select('#pitcherR a')):
-        return 'ピッチャーは' + soup.select('#pitcherR a')[0].text
+        url='https://baseball.yahoo.co.jp' + soup.select('#pitcherR a')[0].get('href')
+        name=soup.select('#pitcherR a')[0].text
     else:
         return ''
+    try:
+        response = request.urlopen(url)
+        soup_player = BeautifulSoup(response, features="html.parser")
+        response.close()
+        if soup_player.select('.bb-profile__name rt')[0]:
+            name=soup_player.select('.bb-profile__name rt')[0].text.strip('（）') 
+        else:
+            name=soup_player.select('.bb-profile__name h1')[0].text.strip('（）')
+    except:
+        pass
+    return 'ピッチャーは' + name
 
 def get_runner(soup):
     runner=[len(soup.select('#base1 span')), len(soup.select('#base2 span')), len(soup.select('#base3 span'))]
@@ -152,8 +167,23 @@ def get_runner(soup):
         return 'ランナー三塁'
     else:
         return 'ランナーなし'
+
 def get_batter_name(soup):
-    return 'バッターは' + soup.select('#batter a')[0].text if soup.select('#batter a') else ''
+    if len(soup.select('#batter a')):
+        url='https://baseball.yahoo.co.jp' + soup.select('#batter a')[0].get('href')
+        name=soup.select('#batter a')[0].text
+    try:
+        response = request.urlopen(url)
+        soup_player = BeautifulSoup(response, features="html.parser")
+        response.close()
+        if soup_player.select('.bb-profile__name rt')[0]:
+            name=soup_player.select('.bb-profile__name rt')[0].text.strip('（）') 
+        else:
+            name=soup_player.select('.bb-profile__name h1')[0].text.strip('（）')
+        return 'バッターは' + name
+    except:
+        pass
+    return ''
 
 def get_batting_result(result):
     return{'number' : result[0].text.strip(), 'total' : result[1].text.strip(), 'type' : result[2].text.strip(), 'speed' : result[3].text.strip(), 'result' : result[4].text.replace(' ', '').replace('\n', '')}
