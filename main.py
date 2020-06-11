@@ -12,22 +12,21 @@ print(teams['top'] + '対' + teams['bottom'] + 'の試合経過をお伝えし�
 def main():
     inning=''
     score=''
-    bso={'ball': -1, 'strike': -1, 'out': -1}
+    bso={'ball': 0, 'strike': 0, 'out': 0}
     batter=''
     pitcher=''
     result=''
+    runner='ランナーなし'
     while True:
-        url = 'https://baseball.yahoo.co.jp/npb_practice/game/2020061116/score'
+        url = 'https://baseball.yahoo.co.jp/npb_practice/game/2020061116/score?index=0710200'
         response = request.urlopen(url)
         soup = BeautifulSoup(response, features="html.parser")
         response.close()
 
         if inning!=soup.select('.live em')[0].text:
             inning=soup.select('.live em')[0].text
-            print(inning)
-
-        if score!=score_converter(soup.select('.score table td')) or inning!=soup.select('.live em')[0].text:
             score=score_converter(soup.select('.score table td'))
+            print(inning_message(inning))
             print(score_message(score))
 
         if batter!=get_batter_name(soup):
@@ -38,11 +37,10 @@ def main():
             pitcher=get_pitcher_name(soup)
             print(pitcher)
 
-        # TODO ランナー文字変換関数作る
-        runner='なし'
-        # print(bso['out'] + 'アウト、ランナー' + runner)
-        # 打席中（打者名が変わっていない）ならボールカウント
-        # アウトカウント変わったらアウトカウント
+        if runner!=get_runner(soup):
+            runner=get_runner(soup)
+            print(count_name(bso['out']) + 'アウト')
+            print(get_runner(soup))
 
         try:
             if result!=soup.select('[class=bb-splits__item] table')[2].select('tbody')[0].select('tr')[0].select('.bb-splitsTable__data'):
@@ -61,19 +59,26 @@ def main():
             else:
                 print(out_count_message(bso['out']))
 
-                
-                
+        if score!=score_converter(soup.select('.score table td')):
+            score=score_converter(soup.select('.score table td'))
+            print(score_message(score))
 
-        
-        # 点差に応じて得点コメントする。
         # 継投 代打 守備 代走など対応。その時は打者空白になる。
-        # print('10秒ごとに更新します')
         time.sleep(10.0)
 
 
 # def get_match_data():
     # top_team='ホークス'
     # bottom_team='ライオンズ'
+
+def inning_message(inning):
+    if inning.split('回')[1]=='表':
+        return inning + teams['top'] + 'の攻撃。'
+    elif inning.split('回')[1]=='裏':
+        return inning + teams['bottom'] + 'の攻撃。'
+    else:
+        return inning
+
 
 # 関数呼び出しはbsoが3まであることを確認してから！様々な処理に使うから大事。
 def bso_converter(bso):
@@ -129,6 +134,24 @@ def get_pitcher_name(soup):
     else:
         return ''
 
+def get_runner(soup):
+    runner=[len(soup.select('#base1 span')), len(soup.select('#base2 span')), len(soup.select('#base3 span'))]
+    if runner[0] and runner[1] and runner[2]:
+        return 'ランナー満塁'
+    elif runner[0] and runner[1]:
+        return 'ランナー一塁二塁'
+    elif runner[0] and runner[2]:
+        return 'ランナー一三塁'
+    elif runner[1] and runner[2]:
+        return 'ランナー二塁三塁'
+    elif runner[0]:
+        return 'ランナー一塁'
+    elif runner[1]:
+        return 'ランナー二塁'
+    elif runner[2]:
+        return 'ランナー三塁'
+    else:
+        return 'ランナーなし'
 def get_batter_name(soup):
     return 'バッターは' + soup.select('#batter a')[0].text if soup.select('#batter a') else ''
 
