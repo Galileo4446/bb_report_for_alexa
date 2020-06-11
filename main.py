@@ -11,7 +11,7 @@ print(teams['top'] + '対' + teams['bottom'] + 'の試合経過をお伝えし�
 
 
 def main():
-    url = 'https://baseball.yahoo.co.jp/npb_practice/game/2020060915/score?index=0320300'
+    url = 'https://baseball.yahoo.co.jp/npb_practice/game/2020061016/score?index=0520300'
     response = request.urlopen(url)
     soup = BeautifulSoup(response, features="html.parser")
     response.close()
@@ -35,10 +35,8 @@ def main():
 
     result=soup.select('[class=bb-splits__item] table')[2].select('tbody')[0].select('tr')[-1].select('.bb-splitsTable__data')
     batting_result=get_batting_result(result)
-    print('ここ')
     print(batting_result_message(batting_result))
-    print('ここ')
-    print(batting_result)
+    # 点差に応じて得点コメントする。
     # 継投 代打 守備 代走など対応。その時は打者空白になる。
 
 
@@ -99,11 +97,77 @@ def get_batting_result(result):
 # ③打球が飛んだ結果の解析。後半で結果を判定。最初の文字でポジション判別。右中間左中間に注意。見逃している結果もあるかもしれないから注意。
 def batting_result_message(result):
     result_name=result['result'].split('[')[0]
-    # continue_list=['見逃し', '空振り', 'ボール', 'ファウル']
-    # next_list=['四球', '死球']
+    speed=result['speed'].split('km/h')[0] + 'キロ'
+    count=result['number'] + '球目'
     if result_name=='ボール':
+        return count + 'は、外れてボールです。' + result['type'] + 'が外れました。' + speed + 'でした。'
+    elif result_name=='見逃し':
+        return count + '、見逃してストライク。' + speed + 'の' + result['type'] + 'が決まっています。'
+    elif result_name=='空振り':
+        return count + 'を空振り。' + result['type'] + 'でした。'
+    elif result_name=='ファウル':
+        return count + 'は、ファウルボール。'
+    elif result_name=='四球':
+        return count + '見送ってフォアボール'
+    elif result_name=='死球':
+        return 'おっと、これはデッドボールとなってしまいました。'
+    elif result_name=='見三振':
+        return count + '、入りました！見逃し三振！' + '最後は' + speed + 'の' + result['type'] + 'でした。'
+    elif result_name=='空三振':
+        return count + '、空振り三振！' + '最後は' + speed + 'の' + result['type'] + '。決まっています。'
+    elif result_name.endswith('安'):
+        return count + position_name_converter(result_name.split('安')[0]) + 'へのヒットになりました。打ったのは' + result['type'] + 'でしょうか。'
+    elif result_name.endswith(('２', '2')):
+        return count + '捉えた当たりは？' + position_name_converter(result_name.split('２')[0]) + 'へのツーベースヒット！' + result['type'] + 'をうまく捉えました。'
+    elif result_name.endswith(('３', '3')):
+        return count + 'を打って、' + position_name_converter(result_name.split('３')[0]) + 'へのスリーベースヒット！' + result['type'] + 'をうまく捉えました。'
+    elif result_name.endswith('本'):
+        return count + '打って、これはどうだ？入るか？入ったー！' + position_name_converter(result_name.split('本')[0]) + 'スタンドに飛び込むホームラン！打ったのは' + result['type'] + 'でしょうか。すばらしい当たりでした。'
+    elif result_name.endswith('ゴロ'):
+        return count + 'これは' + position_name_converter(result_name.split('ゴロ')[0]) + 'へのゴロになりました。' 
+    elif result_name.endswith('邪飛'):
+        return count + '打ち上げて、これはファウルフライになりそうです。' + position_name_converter(result_name.split('邪飛')[0]) + 'が、とりました。'
+    elif result_name.endswith('犠飛'):
+        return count + position_name_converter(result_name.split('犠飛')[0]) + 'への当たり。' + 'ランナー帰って犠牲フライになりました。' 
+    elif result_name.endswith('飛'):
+        return count + position_name_converter(result_name.split('飛')[0]) + 'へ上がった打球。つかみました。' + position_name_converter(result_name.split('飛')[0]) + 'フライです。' 
+    elif result_name.endswith('直'):
+        return count + position_name_converter(result_name.split('直')[0]) + 'ライナー。いい当たりでしたが、' + position_name_converter(result_name.split('飛')[0]) + 'がとっています。' 
+    elif result_name.endswith('併打'):
+        return count + position_name_converter(result_name.split('併打')[0]) + 'へのダブルプレー。最後は' + result['type'] + 'で打ち取りました。' 
+    elif result_name.endswith('犠打'):
+        return count + 'バントしました。きっちり送ってきました。'
+    elif result_name.endswith('失'):
+        return 'おっと、これはエラーとなってしまいました。' + position_name_converter(result_name.split('失')[0]) + 'のエラーが記録されています。'
+    else:
+        return 'まだ登録していない打撃結果です。' + result_name
+
+
+def position_name_converter(pos):
+    if pos=='投':
+        return 'ピッチャー'
+    elif pos=='捕':
+        return 'キャッチャー'
+    elif pos=='一':
+        return 'ファースト'
+    elif pos=='二':
+        return 'セカンド'
+    elif pos=='三':
+        return 'サード'
+    elif pos=='遊':
+        return 'ショート'
+    elif pos=='左':
+        return 'レフト'
+    elif pos=='中':
+        return 'センター'
+    elif pos=='右':
+        return 'ライト'
+    elif pos=='右中':
+        return '右中間'
+    elif pos=='左中':
+        return '左中間'
+    else:
         return ''
-    return '編集中！'
 
 if __name__ == "__main__":
     main()
