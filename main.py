@@ -238,7 +238,7 @@ def batting_result_message(result):
     elif result_name.endswith('飛'):
         return count + position_name_converter(result_name.split('飛')[0]) + 'へ上がった打球。つかみました。' + position_name_converter(result_name.split('飛')[0]) + 'フライです。' 
     elif result_name.endswith('直'):
-        return count + position_name_converter(result_name.split('直')[0]) + 'ライナー。いい当たりでしたが、' + position_name_converter(result_name.split('飛')[0]) + 'がとっています。' 
+        return count + position_name_converter(result_name.split('直')[0]) + 'ライナー。いい当たりでしたが、' + position_name_converter(result_name.split('直')[0]) + 'がとっています。' 
     elif result_name.endswith('併打'):
         return count + position_name_converter(result_name.split('併打')[0]) + 'へのダブルプレー。最後は' + result['type'] + 'で打ち取りました。' 
     elif result_name.endswith('犠打'):
