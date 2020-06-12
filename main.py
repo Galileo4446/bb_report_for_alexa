@@ -133,11 +133,11 @@ def score_converter(score):
 def score_message(score):
     score_name=str(score['top']) + '対' + str(score['bottom'])
     if score['top']==score['bottom']:
-        return score_name + 'の同点です。'
+        return score_name + 'の同点です。' + '\n'
     elif score['top']>score['bottom']:
-        return score_name + 'で、' + teams['top'] + 'がリードしています。'
+        return score_name + 'で、' + teams['top'] + 'がリードしています。' + '\n'
     elif score['top']<score['bottom']:
-        return score_name + 'で、' + teams['bottom'] + 'がリードしています。'
+        return score_name + 'で、' + teams['bottom'] + 'がリードしています。' + '\n'
     else:
         return ''
 
