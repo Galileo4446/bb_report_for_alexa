@@ -22,35 +22,46 @@ def main():
     result=''
     runner='ランナーなし'
     while True:
-        url = 'https://baseball.yahoo.co.jp/npb_practice/game/2020061116/score?index=0120200'
+        url = 'https://baseball.yahoo.co.jp/npb_practice/game/2020061215/score'
         response = request.urlopen(url)
         soup = BeautifulSoup(response, features="html.parser")
         response.close()
-
+        message=''
         if inning!=soup.select('.live em')[0].text:
             inning=soup.select('.live em')[0].text
             score=score_converter(soup.select('.score table td'))
-            print(inning_message(inning))
-            print(score_message(score))
+            try:
+                message+=inning_message(inning)
+            except:
+                if inning=='試合前':
+                    print('試合前です。試合開始時刻を過ぎた後にまたお試しください。')
+                    break
+                elif inning=='試合終了':
+                    print('試合は終了しました。実況を終了します。')
+                    break
+                else:
+                    print('取得できませんでした。速報を終了します。')
+                    break
+            message+=(score_message(score))
 
         if batter!=get_batter_name(soup):
             batter=get_batter_name(soup)
-            print(batter)
+            message+=batter
 
         if pitcher!=get_pitcher_name(soup):
             pitcher=get_pitcher_name(soup)
-            print(pitcher)
+            message+=pitcher
 
         if runner!=get_runner(soup):
             runner=get_runner(soup)
-            print(count_name(bso['out']) + 'アウト')
-            print(get_runner(soup))
+            message+=count_name(bso['out']) + 'アウト'
+            message+=get_runner(soup)
 
         try:
             if result!=soup.select('[class=bb-splits__item] table')[2].select('tbody')[0].select('tr')[0].select('.bb-splitsTable__data'):
                 result=soup.select('[class=bb-splits__item] table')[2].select('tbody')[0].select('tr')[0].select('.bb-splitsTable__data')
                 batting_result=get_batting_result(result)
-                print(batting_result_message(batting_result))
+                message+=batting_result_message(batting_result)
         except:
             pass
             # print('次のバッターを待機しています。')
@@ -59,15 +70,17 @@ def main():
         if bso_archive!=bso_converter(soup.select('.sbo b')):
             bso=bso_converter(soup.select('.sbo b'))
             if bso_archive['out']==bso['out']:
-                print(bso_message(bso))
+                message+=bso_message(bso)
+
             else:
-                print(out_count_message(bso['out']))
+                message+=out_count_message(bso['out'])
 
         if score!=score_converter(soup.select('.score table td')):
             score=score_converter(soup.select('.score table td'))
-            print(score_message(score))
+            message+=score_message(score)
 
         # 継投 代打 守備 代走など対応。その時は打者空白になる。
+        print(message)
         time.sleep(10.0)
 
 
@@ -147,7 +160,7 @@ def get_pitcher_name(soup):
             name=soup_player.select('.bb-profile__name h1')[0].text.strip('（）')
     except:
         pass
-    return 'ピッチャーは' + name
+    return 'ピッチャーは' + name + '\n'
 
 def get_runner(soup):
     runner=[len(soup.select('#base1 span')), len(soup.select('#base2 span')), len(soup.select('#base3 span'))]
@@ -172,17 +185,17 @@ def get_batter_name(soup):
     if len(soup.select('#batter a')):
         url='https://baseball.yahoo.co.jp' + soup.select('#batter a')[0].get('href')
         name=soup.select('#batter a')[0].text
-    try:
-        response = request.urlopen(url)
-        soup_player = BeautifulSoup(response, features="html.parser")
-        response.close()
-        if soup_player.select('.bb-profile__name rt')[0]:
-            name=soup_player.select('.bb-profile__name rt')[0].text.strip('（）') 
-        else:
-            name=soup_player.select('.bb-profile__name h1')[0].text.strip('（）')
-        return 'バッターは' + name
-    except:
-        pass
+        try:
+            response = request.urlopen(url)
+            soup_player = BeautifulSoup(response, features="html.parser")
+            response.close()
+            if soup_player.select('.bb-profile__name rt')[0]:
+                name=soup_player.select('.bb-profile__name rt')[0].text.strip('（）') 
+            else:
+                name=soup_player.select('.bb-profile__name h1')[0].text.strip('（）')
+            return 'バッターは' + name + '\n'
+        except:
+            return 'バッターは' + name + '\n'
     return ''
 
 def get_batting_result(result):
