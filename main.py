@@ -9,7 +9,7 @@ import time
 # response.close()
 
 # チーム名入力
-teams={'top': 'バッファローズ', 'bottom': 'ホークス'}
+teams={'top': 'カープ', 'bottom': 'ホークス'}
 
 print(teams['top'] + '対' + teams['bottom'] + 'の試合経過をお伝えします。')
 
@@ -22,7 +22,7 @@ def main():
     result=''
     runner='ランナーなし'
     while True:
-        url = 'https://baseball.yahoo.co.jp/npb_practice/game/2020061215/score'
+        url = 'https://baseball.yahoo.co.jp/npb_practice/game/2020061415/score'
         response = request.urlopen(url)
         soup = BeautifulSoup(response, features="html.parser")
         response.close()
@@ -52,10 +52,12 @@ def main():
             pitcher=get_pitcher_name(soup)
             message+=pitcher
 
+        # 起動時にノーアウトと出る。回が変わったときはノーアウトとは出さない。
         if runner!=get_runner(soup):
             runner=get_runner(soup)
-            message+=count_name(bso['out']) + 'アウト'
-            message+=get_runner(soup)
+            if count_name(bso['out'])!='スリー':
+                message+=count_name(bso['out']) + 'アウト'
+                message+=get_runner(soup)
 
         try:
             if result!=soup.select('[class=bb-splits__item] table')[2].select('tbody')[0].select('tr')[0].select('.bb-splitsTable__data'):
@@ -241,6 +243,8 @@ def batting_result_message(result):
         return count + position_name_converter(result_name.split('直')[0]) + 'ライナー。いい当たりでしたが、' + position_name_converter(result_name.split('直')[0]) + 'がとっています。' 
     elif result_name.endswith('併打'):
         return count + position_name_converter(result_name.split('併打')[0]) + 'へのダブルプレー。最後は' + result['type'] + 'で打ち取りました。' 
+    elif result_name.endswith('野選'):
+        return count + position_name_converter(result_name.split('野選')[0]) + 'のフィルダースチョイスです。'
     elif result_name.endswith('犠打'):
         return count + 'バントしました。きっちり送ってきました。'
     elif result_name.endswith('失'):
