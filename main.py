@@ -1,6 +1,7 @@
 from urllib import request  # urllib.requestモジュールをインポート
 from bs4 import BeautifulSoup  # BeautifulSoupクラスをインポート
 import time
+import jtalk
 
 # print('速報できる試合を調べています。')
 # url = 'https://baseball.yahoo.co.jp/npb/schedule/'
@@ -9,7 +10,7 @@ import time
 # response.close()
 
 # チーム名入力
-teams={'top': 'カープ', 'bottom': 'ホークス'}
+teams={'top': 'ホークス', 'bottom': 'ライオンズ'}
 
 print(teams['top'] + '対' + teams['bottom'] + 'の試合経過をお伝えします。')
 
@@ -22,7 +23,7 @@ def main():
     result=''
     runner='ランナーなし'
     while True:
-        url = 'https://baseball.yahoo.co.jp/npb_practice/game/2020061415/score'
+        url = 'https://baseball.yahoo.co.jp/npb/game/2020062305/score'
         response = request.urlopen(url)
         soup = BeautifulSoup(response, features="html.parser")
         response.close()
@@ -82,7 +83,9 @@ def main():
             message+=score_message(score)
 
         # 継投 代打 守備 代走など対応。その時は打者空白になる。
-        print(message)
+        if len(message) > 0:
+            print(message)
+            jtalk.jtalk (message)
         time.sleep(10.0)
 
 
@@ -135,11 +138,11 @@ def score_converter(score):
 def score_message(score):
     score_name=str(score['top']) + '対' + str(score['bottom'])
     if score['top']==score['bottom']:
-        return score_name + 'の同点です。' + '\n'
+        return score_name + 'の同点です。'
     elif score['top']>score['bottom']:
-        return score_name + 'で、' + teams['top'] + 'がリードしています。' + '\n'
+        return score_name + 'で、' + teams['top'] + 'がリードしています。'
     elif score['top']<score['bottom']:
-        return score_name + 'で、' + teams['bottom'] + 'がリードしています。' + '\n'
+        return score_name + 'で、' + teams['bottom'] + 'がリードしています。'
     else:
         return ''
 
@@ -162,26 +165,26 @@ def get_pitcher_name(soup):
             name=soup_player.select('.bb-profile__name h1')[0].text.strip('（）')
     except:
         pass
-    return 'ピッチャーは' + name + '\n'
+    return 'ピッチャーは' + name + '。'
 
 def get_runner(soup):
     runner=[len(soup.select('#base1 span')), len(soup.select('#base2 span')), len(soup.select('#base3 span'))]
     if runner[0] and runner[1] and runner[2]:
-        return 'ランナー満塁'
+        return 'ランナー満塁。'
     elif runner[0] and runner[1]:
-        return 'ランナー一塁二塁'
+        return 'ランナー一塁二塁。'
     elif runner[0] and runner[2]:
-        return 'ランナー一三塁'
+        return 'ランナー一三塁。'
     elif runner[1] and runner[2]:
-        return 'ランナー二塁三塁'
+        return 'ランナー二塁三塁。'
     elif runner[0]:
-        return 'ランナー一塁'
+        return 'ランナー一塁。'
     elif runner[1]:
-        return 'ランナー二塁'
+        return 'ランナー二塁。'
     elif runner[2]:
-        return 'ランナー三塁'
+        return 'ランナー三塁。'
     else:
-        return 'ランナーなし'
+        return 'ランナーなし。'
 
 def get_batter_name(soup):
     if len(soup.select('#batter a')):
@@ -195,9 +198,9 @@ def get_batter_name(soup):
                 name=soup_player.select('.bb-profile__name rt')[0].text.strip('（）') 
             else:
                 name=soup_player.select('.bb-profile__name h1')[0].text.strip('（）')
-            return 'バッターは' + name + '\n'
+            return 'バッターは' + name + '。'
         except:
-            return 'バッターは' + name + '\n'
+            return 'バッターは' + name + '。'
     return ''
 
 def get_batting_result(result):
