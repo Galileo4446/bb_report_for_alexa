@@ -3,14 +3,19 @@ from bs4 import BeautifulSoup  # BeautifulSoupクラスをインポート
 import time
 import jtalk
 
-# print('速報できる試合を調べています。')
-# url = 'https://baseball.yahoo.co.jp/npb/schedule/'
-# response = request.urlopen(url)
-# soup = BeautifulSoup(response, features="html.parser")
-# response.close()
+print('速報してほしいチームを教えてください。')
+url = 'https://baseball.yahoo.co.jp/npb/schedule/'
+response = request.urlopen(url)
+soup = BeautifulSoup(response, features="html.parser")
+response.close()
+# .bbscore__itemでfor回す。速報可能かつチーム名かぶったらurlとtopbottomをteamsに格納
+# 終了していたら結果報告するといいかも見どころなら開始時刻と見どころ読み上げる？
+# print(soup.select('.bb-score__item')[5].text)
+# 最大6試合検索 速報可能ならteamsに追加
 
 # チーム名入力
-teams={'top': 'ホークス', 'bottom': 'ライオンズ'}
+teams={'top': 'ホークス', 'bottom': 'ライオンズ', 'url':
+'https://baseball.yahoo.co.jp/npb/game/2020062605/score'}
 
 print(teams['top'] + '対' + teams['bottom'] + 'の試合経過をお伝えします。')
 
@@ -23,7 +28,8 @@ def main():
     result=''
     runner='ランナーなし'
     while True:
-        url = 'https://baseball.yahoo.co.jp/npb/game/2020062305/score'
+        # url = 'https://baseball.yahoo.co.jp/npb/game/2020062605/score'
+        url=teams['url']
         response = request.urlopen(url)
         soup = BeautifulSoup(response, features="html.parser")
         response.close()
@@ -148,18 +154,18 @@ def score_message(score):
 
 def get_pitcher_name(soup):
     if len(soup.select('#pitcherL a')):
-        url='https://baseball.yahoo.co.jp' + soup.select('#pitcherL a')[0].get('href')
-        name=soup.select('#pitcherL a')[0].text
+        url='https://baseball.yahoo.co.jp' + soup.select('#pitcherL a')[1].get('href')
+        name=soup.select('#pitcherL a')[1].text
     elif len(soup.select('#pitcherR a')):
-        url='https://baseball.yahoo.co.jp' + soup.select('#pitcherR a')[0].get('href')
-        name=soup.select('#pitcherR a')[0].text
+        url='https://baseball.yahoo.co.jp' + soup.select('#pitcherR a')[1].get('href')
+        name=soup.select('#pitcherR a')[1].text
     else:
         return ''
     try:
         response = request.urlopen(url)
         soup_player = BeautifulSoup(response, features="html.parser")
         response.close()
-        if soup_player.select('.bb-profile__name rt')[0]:
+        if len(soup_player.select('.bb-profile__name rt')[0])>0:
             name=soup_player.select('.bb-profile__name rt')[0].text.strip('（）') 
         else:
             name=soup_player.select('.bb-profile__name h1')[0].text.strip('（）')
@@ -188,8 +194,8 @@ def get_runner(soup):
 
 def get_batter_name(soup):
     if len(soup.select('#batter a')):
-        url='https://baseball.yahoo.co.jp' + soup.select('#batter a')[0].get('href')
-        name=soup.select('#batter a')[0].text
+        url='https://baseball.yahoo.co.jp' + soup.select('#batter a')[1].get('href')
+        name=soup.select('#batter a')[1].text
         try:
             response = request.urlopen(url)
             soup_player = BeautifulSoup(response, features="html.parser")
