@@ -15,7 +15,7 @@ response.close()
 
 # チーム名入力
 teams={'top': 'ホークス', 'bottom': 'ライオンズ', 'url':
-'https://baseball.yahoo.co.jp/npb/game/2020062605/score'}
+'https://baseball.yahoo.co.jp/npb/game/2020062805/score'}
 
 print(teams['top'] + '対' + teams['bottom'] + 'の試合経過をお伝えします。')
 
@@ -74,7 +74,7 @@ def main():
         except:
             pass
             # print('次のバッターを待機しています。')
-        
+
         bso_archive=bso
         if bso_archive!=bso_converter(soup.select('.sbo b')):
             bso=bso_converter(soup.select('.sbo b'))
@@ -136,7 +136,7 @@ def count_name(num):
     elif num == 3:
         return 'スリー'
     else:
-        return ''    
+        return ''
 
 def score_converter(score):
     return {'top': int(score[1].text), 'bottom': int(score[3].text)}
@@ -166,7 +166,7 @@ def get_pitcher_name(soup):
         soup_player = BeautifulSoup(response, features="html.parser")
         response.close()
         if len(soup_player.select('.bb-profile__name rt')[0])>0:
-            name=soup_player.select('.bb-profile__name rt')[0].text.strip('（）') 
+            name=soup_player.select('.bb-profile__name rt')[0].text.strip('（）')
         else:
             name=soup_player.select('.bb-profile__name h1')[0].text.strip('（）')
     except:
@@ -201,7 +201,7 @@ def get_batter_name(soup):
             soup_player = BeautifulSoup(response, features="html.parser")
             response.close()
             if soup_player.select('.bb-profile__name rt')[0]:
-                name=soup_player.select('.bb-profile__name rt')[0].text.strip('（）') 
+                name=soup_player.select('.bb-profile__name rt')[0].text.strip('（）')
             else:
                 name=soup_player.select('.bb-profile__name h1')[0].text.strip('（）')
             return 'バッターは' + name + '。'
@@ -227,7 +227,7 @@ def batting_result_message(result):
     elif result_name=='四球':
         return count + '、見送ってフォアボール'
     elif result_name=='死球':
-        return 'おっと、これはデッドボールとなってしまいました。'
+        return count + 'これはデッドボールとなってしまいました。'
     elif result_name=='見三振':
         return count + '、入りました！見逃し三振！' + '最後は' + speed + 'の' + result['type'] + 'でした。'
     elif result_name=='空三振':
@@ -239,25 +239,27 @@ def batting_result_message(result):
     elif result_name.endswith(('３', '3')):
         return count + 'を打って、' + position_name_converter(result_name.split('３')[0]) + 'へのスリーベースヒット！' + result['type'] + 'をうまく捉えました。'
     elif result_name.endswith('本'):
-        return count + '打って、これはどうだ？入るか？入ったー！' + position_name_converter(result_name.split('本')[0]) + 'スタンドに飛び込むホームラン！打ったのは' + result['type'] + 'でしょうか。すばらしい当たりでした。'
+        return count + '打って、これはどうだ？入ったー！' + position_name_converter(result_name.split('本')[0]) + 'スタンドに飛び込むホームラン！打ったのは' + result['type'] + 'でしょうか。すばらしい当たりでした。'
     elif result_name.endswith('ゴロ'):
-        return count + 'これは' + position_name_converter(result_name.split('ゴロ')[0]) + 'へのゴロになりました。' 
+        return count + 'これは' + position_name_converter(result_name.split('ゴロ')[0]) + 'へのゴロになりました。'
     elif result_name.endswith('邪飛'):
         return count + '打ち上げて、これはファウルフライになりそうです。' + position_name_converter(result_name.split('邪飛')[0]) + 'が、とりました。'
     elif result_name.endswith('犠飛'):
-        return count + position_name_converter(result_name.split('犠飛')[0]) + 'への当たり。' + 'ランナー帰って犠牲フライになりました。' 
+        return count + position_name_converter(result_name.split('犠飛')[0]) + 'への当たり。' + 'ランナー帰って犠牲フライになりました。'
     elif result_name.endswith('飛'):
-        return count + position_name_converter(result_name.split('飛')[0]) + 'へ上がった打球。つかみました。' + position_name_converter(result_name.split('飛')[0]) + 'フライです。' 
+        return count + position_name_converter(result_name.split('飛')[0]) + 'へ上がった打球。つかみました。' + position_name_converter(result_name.split('飛')[0]) + 'フライです。'
     elif result_name.endswith('直'):
-        return count + position_name_converter(result_name.split('直')[0]) + 'ライナー。いい当たりでしたが、' + position_name_converter(result_name.split('直')[0]) + 'がとっています。' 
+        return count + position_name_converter(result_name.split('直')[0]) + 'ライナー。いい当たりでしたが、' + position_name_converter(result_name.split('直')[0]) + 'がとっています。'
     elif result_name.endswith('併打'):
-        return count + position_name_converter(result_name.split('併打')[0]) + 'へのダブルプレー。最後は' + result['type'] + 'で打ち取りました。' 
+        return count + position_name_converter(result_name.split('併打')[0]) + 'へのダブルプレー。最後は' + result['type'] + 'で打ち取りました。'
     elif result_name.endswith('野選'):
         return count + position_name_converter(result_name.split('野選')[0]) + 'のフィルダースチョイスです。'
+    elif result_name.endswith('犠野'):
+        return count + '、バントした打球、' + position_name_converter(result_name.split('犠野')[0]) + 'のフィルダースチョイスです。'
     elif result_name.endswith('犠打'):
-        return count + 'バントしました。きっちり送ってきました。'
+        return count + '、バントしました。きっちり送ってきました。'
     elif result_name.endswith('失'):
-        return 'おっと、これはエラーとなってしまいました。' + position_name_converter(result_name.split('失')[0]) + 'のエラーが記録されています。'
+        return 'これはエラーとなってしまいました。' + position_name_converter(result_name.split('失')[0]) + 'のエラーが記録されています。'
     else:
         return 'まだ登録していない打撃結果です。' + result_name
 
