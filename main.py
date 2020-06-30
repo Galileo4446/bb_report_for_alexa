@@ -3,30 +3,57 @@ from bs4 import BeautifulSoup  # BeautifulSoupクラスをインポート
 import time
 import jtalk
 
-print('速報してほしいチームを教えてください。')
-url = 'https://baseball.yahoo.co.jp/npb/schedule/'
-response = request.urlopen(url)
-soup = BeautifulSoup(response, features="html.parser")
-response.close()
-# .bbscore__itemでfor回す。速報可能かつチーム名かぶったらurlとtopbottomをteamsに格納
-# 終了していたら結果報告するといいかも見どころなら開始時刻と見どころ読み上げる？
-# print(soup.select('.bb-score__item')[5].text)
-# 最大6試合検索 速報可能ならteamsに追加
-
-# チーム名入力
-teams={'top': 'ホークス', 'bottom': 'ライオンズ', 'url':
-'https://baseball.yahoo.co.jp/npb/game/2020062805/score'}
-
-print(teams['top'] + '対' + teams['bottom'] + 'の試合経過をお伝えします。')
-
 def main():
+    url = 'https://baseball.yahoo.co.jp/npb/schedule/'
+    response = request.urlopen(url)
+    soup = BeautifulSoup(response, features="html.parser")
+    response.close()
+    games=[]
+    teams=[]
+    for item in soup.select('.bb-score__item a'):
+        game_info= {'top'     : item.select('.bb-score__awayLogo')[0].text,
+                    'bottom'  : item.select('.bb-score__homeLogo')[0].text,
+                    'ballpark': item.select('span')[0].text,
+                    'url'     : item.get('href'),
+                    'liveflag': 0, # TODO ライブ中のフラグ取得 
+                    'status'  : item.select('.bb-score__link')[0].text}
+        games.append(game_info)
+    # print(soup.select('.bb-score__team'))
+    # .bbscore__itemでfor回す。速報可能かつチーム名かぶったらurlとtopbottomをteamsに格納
+    # 終了していたら結果報告するといいかも見どころなら開始時刻と見どころ読み上げる？
+    # print(soup.select('.bb-score__team')[5].text)
+    # 最大6試合検索 速報可能ならteamsに追加
+    print('速報してほしいチームを教えてください。')
+    target_team=input()
+    # 入力を変換
+    for game in games:
+        if target_team == game['top'] or target_team == game['bottom']:
+            teams=game
+    if teams:
+        if teams['liveflag']==1:
+            print(teams['top'] + '対' + teams['bottom'] + 'の試合経過をお伝えします。')
+            teams['url']=teams['url'].strip('index') + 'score'
+            live_report(teams)
+        elif teams['status']=='試合終了':
+            after_report(teams)
+        elif teams['status']=='予告先発' or teams['status']=='見どころ' or teams['status']=='試合前':
+            before_report(teams)
+        elif teams['status']=='試合中止':
+            canceled_report(teams)
+        else:
+            print(teams['status'])
+            print('！！この状況にまだ対応していません。')
+    else:
+        print('一致する球団がありませんでした。')
+
+def live_report(teams):
     inning=''
     score=''
     bso={'ball': 0, 'strike': 0, 'out': 0}
     batter=''
     pitcher=''
     result=''
-    runner='ランナーなし'
+    runner=''
     while True:
         # url = 'https://baseball.yahoo.co.jp/npb/game/2020062605/score'
         url=teams['url']
@@ -87,6 +114,7 @@ def main():
         if score!=score_converter(soup.select('.score table td')):
             score=score_converter(soup.select('.score table td'))
             message+=score_message(score)
+        # TODO リプレー検証中に対応
 
         # 継投 代打 守備 代走など対応。その時は打者空白になる。
         if len(message) > 0:
@@ -100,10 +128,12 @@ def main():
     # bottom_team='ライオンズ'
 
 def inning_message(inning):
-    if inning.split('回')[1]=='表':
-        return inning + teams['top'] + 'の攻撃。'
-    elif inning.split('回')[1]=='裏':
-        return inning + teams['bottom'] + 'の攻撃。'
+    inning_num=inning.split('回')[0]
+    inning_frame=inning.split('回')[1]
+    if inning_frame=='表':
+        return inning_num + '回オモテ、' + teams['top'] + 'の攻撃。'
+    elif inning_frame=='裏':
+        return inning_num + '回ウラ、' + teams['bottom'] + 'の攻撃。'
     else:
         return inning
 
@@ -245,7 +275,7 @@ def batting_result_message(result):
     elif result_name.endswith('邪飛'):
         return count + '打ち上げて、これはファウルフライになりそうです。' + position_name_converter(result_name.split('邪飛')[0]) + 'が、とりました。'
     elif result_name.endswith('犠飛'):
-        return count + position_name_converter(result_name.split('犠飛')[0]) + 'への当たり。' + 'ランナー帰って犠牲フライになりました。'
+        return count + position_name_converter(result_name.split('犠飛')[0]) + 'へ上がった打球。' + 'ランナー帰って犠牲フライになりました。'
     elif result_name.endswith('飛'):
         return count + position_name_converter(result_name.split('飛')[0]) + 'へ上がった打球。つかみました。' + position_name_converter(result_name.split('飛')[0]) + 'フライです。'
     elif result_name.endswith('直'):
@@ -289,6 +319,22 @@ def position_name_converter(pos):
         return '左中間'
     else:
         return ''
+
+def after_report(teams):
+    print(teams['top'] + '対' + teams['bottom'] + 'の試合結果をお知らせします。1対1の引き分けに終わりました。')
+    # 点数と勝敗、勝ち投手など。あれば戦評読む。その後終了。
+    return
+
+def before_report(teams):
+    print(teams['top'] + '対' + teams['bottom'] + 'の試合情報です。')
+    print('予告先発は、先発Aと先発Bです。')
+    print('見どころは、4番の働きです。')
+    print('18時プレイボール予定です。試合開始後にもう一度起動してください。')
+    return
+
+def canceled_report(teams):
+    print('本日の、' + teams['top'] + '対' + teams['bottom'] + 'の試合は中止となりました。')
+    return
 
 if __name__ == "__main__":
     main()
